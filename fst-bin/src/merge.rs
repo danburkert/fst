@@ -26,10 +26,10 @@ pub struct Merger<I> {
     keep_tmp_dir: bool,
 }
 
-type KV = (String, u64);
+type KV = (Vec<u8>, u64);
 
 impl<I> Merger<I>
-where I: Iterator<Item=Result<(String, u64), Error>> + Send + 'static {
+where I: Iterator<Item=Result<(Vec<u8>, u64), Error>> + Send + 'static {
     pub fn new<T, P>(it: T, output: P) -> Self
             where P: AsRef<Path>,
                   T: IntoIterator<IntoIter=I, Item=I::Item> {

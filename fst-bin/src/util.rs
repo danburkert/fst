@@ -86,7 +86,7 @@ pub struct ConcatLines {
     cur: Option<Lines>,
 }
 
-type Lines = io::Lines<io::BufReader<Box<io::Read + Send + Sync + 'static>>>;
+type Lines = io::Split<io::BufReader<Box<io::Read + Send + Sync + 'static>>>;
 
 impl ConcatLines {
     pub fn new(mut inputs: Vec<PathBuf>) -> ConcatLines {
@@ -96,7 +96,7 @@ impl ConcatLines {
 }
 
 impl Iterator for ConcatLines {
-    type Item = io::Result<String>;
+    type Item = io::Result<Vec<u8>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -108,7 +108,7 @@ impl Iterator for ConcatLines {
                             Err(err) => return Some(Err(err)),
                             Ok(rdr) => rdr,
                         };
-                        self.cur = Some(rdr.lines());
+                        self.cur = Some(rdr.split(b'\n'));
                     }
                 }
             }
@@ -126,7 +126,7 @@ pub struct ConcatCsv {
 }
 
 type Reader = Box<io::Read + Send + Sync + 'static>;
-type Rows = csv::DeserializeRecordsIntoIter<Reader, (String, u64)>;
+type Rows = csv::DeserializeRecordsIntoIter<Reader, (Vec<u8>, u64)>;
 
 impl ConcatCsv {
     pub fn new(mut inputs: Vec<PathBuf>) -> ConcatCsv {
@@ -134,7 +134,7 @@ impl ConcatCsv {
         ConcatCsv { inputs: inputs, cur: None }
     }
 
-    fn read_row(&mut self) -> Option<Result<(String, u64), Error>> {
+    fn read_row(&mut self) -> Option<Result<(Vec<u8>, u64), Error>> {
         let mut rdr = match self.cur {
             None => return None,
             Some(ref mut rdr) => rdr,
@@ -148,7 +148,7 @@ impl ConcatCsv {
 }
 
 impl Iterator for ConcatCsv {
-    type Item = Result<(String, u64), Error>;
+    type Item = Result<(Vec<u8>, u64), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
